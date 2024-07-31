@@ -461,12 +461,14 @@ const parseBodyAndResponse = ({
   name,
   strict,
   generate,
+  ommitReadonly,
 }: {
   data: ResponseObject | RequestBodyObject | ReferenceObject | undefined;
   context: ContextSpecs;
   name: string;
   strict: boolean;
   generate: boolean;
+  ommitReadonly?: boolean;
 }): {
   input: ZodValidationSchemaDefinition;
   isArray: boolean;
@@ -499,6 +501,13 @@ const parseBodyAndResponse = ({
     context,
   );
 
+  if (ommitReadonly && resolvedJsonSchema.readOnly) {
+    return {
+      input: { functions: [], consts: [] },
+      isArray: false,
+    }
+  }
+
   // keep the same behaviour for array
   if (resolvedJsonSchema.items) {
     const min =
@@ -530,7 +539,7 @@ const parseBodyAndResponse = ({
 
   return {
     input: generateZodValidationSchemaDefinition(
-      resolvedJsonSchema,
+      ommitReadonly ? withoutReadonly(resolvedJsonSchema) : resolvedJsonSchema,
       context,
       name,
       strict,
@@ -541,6 +550,29 @@ const parseBodyAndResponse = ({
     isArray: false,
   };
 };
+
+const withoutReadonly = (schema: SchemaObject): SchemaObject => {
+  if (schema.properties) {
+    return {
+      ...schema,
+      properties: Object.entries(schema.properties).reduce(
+        (acc, [key, value]) => {
+          if (value.readOnly) {
+            return acc;
+          }
+
+          return {
+            ...acc,
+            [key]: withoutReadonly(value),
+          };
+        },
+        {},
+      ),
+    };
+  }
+
+  return schema;
+}
 
 const parseParameters = ({
   data,
@@ -726,6 +758,7 @@ const generateZodRoute = async (
     name: camel(`${operationName}-body`),
     strict: override.zod.strict.body,
     generate: override.zod.generate.body,
+    ommitReadonly: true,
   });
 
   const responses = (
@@ -740,6 +773,7 @@ const generateZodRoute = async (
       name: camel(`${operationName}-${code}-response`),
       strict: override.zod.strict.response,
       generate: override.zod.generate.response,
+      ommitReadonly: false,
     }),
   );
 
