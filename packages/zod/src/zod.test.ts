@@ -386,6 +386,10 @@ const basicApiSchema = {
                     schema: {
                       type: 'object',
                       properties: {
+                        id: {
+                          type: 'string',
+                          readOnly: true,
+                        },
                         name: {
                           type: 'string',
                         },
@@ -401,6 +405,10 @@ const basicApiSchema = {
                       schema: {
                         type: 'object',
                         properties: {
+                          id: {
+                            type: 'string',
+                            readOnly: true,
+                          },
                           name: {
                             type: 'string',
                           },
@@ -462,7 +470,7 @@ describe('generatePartOfSchemaGenerateZod', () => {
     );
 
     expect(result.implementation).toBe(
-      'export const testParams = zod.object({\n  "id": zod.string()\n})\n\nexport const testQueryParams = zod.object({\n  "page": zod.number().optional()\n})\n\nexport const testHeader = zod.object({\n  "x-header": zod.string()\n})\n\nexport const testBody = zod.object({\n  "name": zod.string().optional()\n})\n\nexport const testResponse = zod.object({\n  "name": zod.string().optional()\n})\n\n',
+      'export const testParams = zod.object({\n  "id": zod.string()\n})\n\nexport const testQueryParams = zod.object({\n  "page": zod.number().optional()\n})\n\nexport const testHeader = zod.object({\n  "x-header": zod.string()\n})\n\nexport const testBody = zod.object({\n  "name": zod.string().optional()\n})\n\nexport const testResponse = zod.object({\n  "id": zod.string().optional(),\n  "name": zod.string().optional()\n})\n\n',
     );
   });
 
